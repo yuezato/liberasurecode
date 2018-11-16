@@ -295,7 +295,9 @@ impl ErasureCoder {
 }
 impl Drop for ErasureCoder {
     fn drop(&mut self) {
-        let _ = c_api::instance_destroy(self.desc);
+        with_global_lock(||{
+            let _ = c_api::instance_destroy(self.desc);
+        });
     }
 }
 
@@ -327,6 +329,62 @@ mod tests {
 
     use super::*;
     use result::Error;
+
+    macro_rules! gen {
+        ($i:ident) => {
+            #[test]
+            fn $i() {
+                let mut coder = ErasureCoder::new(non_zero(4), non_zero(2)).unwrap();
+                let data = vec![0, 1, 2, 3];
+                let encoded = coder.encode(&data).unwrap();
+                coder.decode(&encoded[0..]).unwrap();
+            }
+        }
+    }
+
+    gen!(test0);
+    gen!(test1);
+    gen!(test2);
+    gen!(test3);
+    gen!(test4);
+    gen!(test5);
+    gen!(test6);
+    gen!(test7);
+    gen!(test8);
+    gen!(test9);
+
+    gen!(test10);
+    gen!(test11);
+    gen!(test12);
+    gen!(test13);
+    gen!(test14);
+    gen!(test15);
+    gen!(test16);
+    gen!(test17);
+    gen!(test18);
+    gen!(test19);
+
+    gen!(test20);
+    gen!(test21);
+    gen!(test22);
+    gen!(test23);
+    gen!(test24);
+    gen!(test25);
+    gen!(test26);
+    gen!(test27);
+    gen!(test28);
+    gen!(test29);
+
+    gen!(test30);
+    gen!(test31);
+    gen!(test32);
+    gen!(test33);
+    gen!(test34);
+    gen!(test35);
+    gen!(test36);
+    gen!(test37);
+    gen!(test38);
+    gen!(test39);
 
     #[test]
     fn it_works() {
