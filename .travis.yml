@@ -22,3 +22,8 @@ matrix:
 env:
   global:
   - RUSTFLAGS="-D warnings"
+
+branches:
+  only:
+  - gh-pages
+  - /.*/  
