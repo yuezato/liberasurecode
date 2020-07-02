@@ -56,9 +56,18 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 ./autogen.sh
 if [[ $DEBUG = true ]]; then
-    LIBS="-lJerasure" ./configure --disable-shared --with-pic --prefix $BUILD_DIR CFLAGS="${CFLAGS:-} -O0 -g"
+    LIBS="-lJerasure -lerasurecode_rs_vand" ./configure --disable-shared --with-pic --prefix $BUILD_DIR CFLAGS="${CFLAGS:-} -O0 -g"
 else
-    LIBS="-lJerasure" ./configure --disable-shared --with-pic --prefix $BUILD_DIR
+    LIBS="-lJerasure -lerasurecode_rs_vand" ./configure --disable-shared --with-pic --prefix $BUILD_DIR
 fi
 patch -p1 < ../liberasurecode.patch # Applies a patch for building static library
+patch -p1 < ../make_liberasurecode_rs_vand_static.patch # Applies a patch for building static library
 make $MAKE_FLAGS install
+# FIX:
+# liberasurecode.a と liberasurecode_rs_vand.a に rs_galois.c のコンパイル結果が入ってしまい
+# symbol duplicate になるので取り除いている
+# Makefile.amに工夫した方が良いと思うし他に良い手があると思うが力技で解決している
+echo $(pwd)
+cd ..
+echo $(pwd)
+ar -dv lib/liberasurecode.a liberasurecode_la-rs_galois.o

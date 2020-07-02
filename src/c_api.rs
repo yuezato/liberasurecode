@@ -47,6 +47,7 @@ pub const EINSUFFFRAGS: u32 = 208;
 #[link(name = "gf_complete", kind = "static")]
 #[link(name = "Jerasure", kind = "static")]
 #[link(name = "Xorcode", kind = "static")]
+#[link(name = "erasurecode_rs_vand", kind = "static")]
 extern "C" {
     /// Create a liberasurecode instance and return a descriptor
     /// for use with EC operations (encode, decode, reconstruct)

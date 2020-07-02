@@ -1,0 +1,133 @@
+diff --git a/src/backends/rs_vand/liberasurecode_rs_vand.c b/src/backends/rs_vand/liberasurecode_rs_vand.c
+index cc84b65..66f46ac 100644
+--- a/src/backends/rs_vand/liberasurecode_rs_vand.c
++++ b/src/backends/rs_vand/liberasurecode_rs_vand.c
+@@ -26,6 +26,7 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <liberasurecode_rs_vand.h>
+ 
+ #include "erasurecode.h"
+ #include "erasurecode_backend.h"
+@@ -80,7 +81,7 @@ struct liberasurecode_rs_vand_descriptor {
+     int w;
+ };
+ 
+-static int liberasurecode_rs_vand_encode(void *desc, char **data, char **parity,
++static int liberasurecode_rs_vand_encode_stub(void *desc, char **data, char **parity,
+         int blocksize)
+ {
+     struct liberasurecode_rs_vand_descriptor *rs_vand_desc = 
+@@ -92,7 +93,7 @@ static int liberasurecode_rs_vand_encode(void *desc, char **data, char **parity,
+     return 0;
+ }
+ 
+-static int liberasurecode_rs_vand_decode(void *desc, char **data, char **parity,
++static int liberasurecode_rs_vand_decode_stub(void *desc, char **data, char **parity,
+         int *missing_idxs, int blocksize)
+ {
+     struct liberasurecode_rs_vand_descriptor *rs_vand_desc = 
+@@ -105,7 +106,7 @@ static int liberasurecode_rs_vand_decode(void *desc, char **data, char **parity,
+     return 0;
+ }
+ 
+-static int liberasurecode_rs_vand_reconstruct(void *desc, char **data, char **parity,
++static int liberasurecode_rs_vand_reconstruct_stub(void *desc, char **data, char **parity,
+         int *missing_idxs, int destination_idx, int blocksize)
+ {
+     struct liberasurecode_rs_vand_descriptor *rs_vand_desc = 
+@@ -168,72 +169,14 @@ static void * liberasurecode_rs_vand_init(struct ec_backend_args *args,
+         goto error;
+     }
+ 
+-     /*
+-     * ISO C forbids casting a void* to a function pointer.
+-     * Since dlsym return returns a void*, we use this union to
+-     * "transform" the void* to a function pointer.
+-     */
+-    union {
+-        init_liberasurecode_rs_vand_func initp;
+-        deinit_liberasurecode_rs_vand_func deinitp;
+-        free_systematic_matrix_func freematrixp;
+-        make_systematic_matrix_func makematrixp;
+-        liberasurecode_rs_vand_encode_func encodep;
+-        liberasurecode_rs_vand_decode_func decodep;
+-        liberasurecode_rs_vand_reconstruct_func reconstructp;
+-        void *vptr;
+-    } func_handle = {.vptr = NULL};
+-
+-
+     /* fill in function addresses */
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "init_liberasurecode_rs_vand");
+-    desc->init_liberasurecode_rs_vand = func_handle.initp;
+-    if (NULL == desc->init_liberasurecode_rs_vand) {
+-        goto error; 
+-    }
+-    
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "deinit_liberasurecode_rs_vand");
+-    desc->deinit_liberasurecode_rs_vand = func_handle.deinitp;
+-    if (NULL == desc->deinit_liberasurecode_rs_vand) {
+-        goto error; 
+-    }
+-    
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "make_systematic_matrix");
+-    desc->make_systematic_matrix = func_handle.makematrixp;
+-    if (NULL == desc->make_systematic_matrix) {
+-        goto error; 
+-    }
+-    
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "free_systematic_matrix");
+-    desc->free_systematic_matrix = func_handle.freematrixp;
+-    if (NULL == desc->free_systematic_matrix) {
+-        goto error; 
+-    }
+-    
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "liberasurecode_rs_vand_encode");
+-    desc->liberasurecode_rs_vand_encode = func_handle.encodep;
+-    if (NULL == desc->liberasurecode_rs_vand_encode) {
+-        goto error; 
+-    }
+-    
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "liberasurecode_rs_vand_decode");
+-    desc->liberasurecode_rs_vand_decode = func_handle.decodep;
+-    if (NULL == desc->liberasurecode_rs_vand_decode) {
+-        goto error; 
+-    }
+-    
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "liberasurecode_rs_vand_reconstruct");
+-    desc->liberasurecode_rs_vand_reconstruct = func_handle.reconstructp;
+-    if (NULL == desc->liberasurecode_rs_vand_reconstruct) {
+-        goto error; 
+-    }
++    desc->init_liberasurecode_rs_vand = init_liberasurecode_rs_vand;
++    desc->deinit_liberasurecode_rs_vand = deinit_liberasurecode_rs_vand;
++    desc->make_systematic_matrix = make_systematic_matrix;
++    desc->free_systematic_matrix = free_systematic_matrix;
++    desc->liberasurecode_rs_vand_encode = liberasurecode_rs_vand_encode;
++    desc->liberasurecode_rs_vand_decode = liberasurecode_rs_vand_decode;
++    desc->liberasurecode_rs_vand_reconstruct = liberasurecode_rs_vand_reconstruct;
+   
+     desc->init_liberasurecode_rs_vand(desc->k, desc->m);
+ 
+@@ -292,10 +235,10 @@ static bool liberasurecode_rs_vand_is_compatible_with(uint32_t version) {
+ struct ec_backend_op_stubs liberasurecode_rs_vand_op_stubs = {
+     .INIT                       = liberasurecode_rs_vand_init,
+     .EXIT                       = liberasurecode_rs_vand_exit,
+-    .ENCODE                     = liberasurecode_rs_vand_encode,
+-    .DECODE                     = liberasurecode_rs_vand_decode,
++    .ENCODE                     = liberasurecode_rs_vand_encode_stub,
++    .DECODE                     = liberasurecode_rs_vand_decode_stub,
+     .FRAGSNEEDED                = liberasurecode_rs_vand_min_fragments,
+-    .RECONSTRUCT                = liberasurecode_rs_vand_reconstruct,
++    .RECONSTRUCT                = liberasurecode_rs_vand_reconstruct_stub,
+     .ELEMENTSIZE                = liberasurecode_rs_vand_element_size,
+     .ISCOMPATIBLEWITH           = liberasurecode_rs_vand_is_compatible_with,
+     .GETMETADATASIZE            = get_backend_metadata_size_zero,

@@ -353,7 +353,7 @@ index d4a06c2..f039c44 100644
  {
      if (NULL == instance)
          return NULL;
-+    if (strncmp(instance->common.soname, "libJerasure", 11) == 0)
++    if (strncmp(instance->common.soname, "libJerasure", 11) == 0 || strncmp(instance->common.soname, "liberasurecode_rs_vand", 22) == 0)
 +        return (void *)-1;
 +
      /* Use RTLD_LOCAL to avoid symbol collisions */
@@ -363,7 +363,7 @@ index d4a06c2..f039c44 100644
      if (NULL == instance || NULL == instance->desc.backend_sohandle)
          return 0;
  
-+    if (strncmp(instance->common.soname, "libJerasure", 11) == 0)
++    if (strncmp(instance->common.soname, "libJerasure", 11) == 0 || strncmp(instance->common.soname, "liberasurecode_rs_vand", 22) == 0)
 +        return 0;
 +
      dlclose(instance->desc.backend_sohandle);
