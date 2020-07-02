@@ -170,7 +170,8 @@ impl Builder {
                     data_fragments: self.data_fragments,
                     parity_fragments: self.parity_fragments,
                     desc,
-                }).map_err(Error::from_error_code)?;
+                })
+                .map_err(Error::from_error_code)?;
 
             // `SIGSEGV` may be raised if encodings are executed (in parallel) immediately after creation.
             // To prevent it, sleeps the current thread for a little while.
@@ -261,9 +262,9 @@ impl ErasureCoder {
     /// Decodes the original data from the given fragments.
     pub fn decode<T: AsRef<[u8]>>(&mut self, fragments: &[T]) -> Result<Vec<u8>> {
         if fragments.is_empty() {
-            return Err(Error::InsufficientFragments);;
+            return Err(Error::InsufficientFragments);
         }
-        let data_fragments = &fragments.iter().map(|x| x.as_ref()).collect::<Vec<_>>()[..];
+        let data_fragments = &fragments.iter().map(AsRef::as_ref).collect::<Vec<_>>()[..];
 
         let (data, data_len) =
             c_api::decode(self.desc, data_fragments, false).map_err(Error::from_error_code)?;
@@ -288,7 +289,7 @@ impl ErasureCoder {
         }
 
         let fragments = available_fragments.collect::<Vec<_>>();
-        let fragments = fragments.iter().map(|x| x.as_ref()).collect::<Vec<_>>();
+        let fragments = fragments.iter().map(AsRef::as_ref).collect::<Vec<_>>();
         c_api::reconstruct_fragment(self.desc, &fragments[..], index)
             .map_err(Error::from_error_code)
     }
@@ -303,10 +304,10 @@ fn with_global_lock<F, T>(f: F) -> T
 where
     F: FnOnce() -> T,
 {
-    use std::sync::{Mutex, Once, ONCE_INIT};
+    use std::sync::{Mutex, Once};
 
     static mut MUTEX: Option<Mutex<()>> = None;
-    static INIT: Once = ONCE_INIT;
+    static INIT: Once = Once::new();
     INIT.call_once(|| unsafe {
         MUTEX = Some(Mutex::default());
     });
@@ -365,6 +366,43 @@ mod tests {
         }
     }
 
+    #[test]
+    fn reconstruct_works_for_all_fragments() -> Result<()> {
+        let k = 6;
+        let m = 3;
+        let len = 0xc0de;
+        let mut coder = ErasureCoder::new(non_zero(k), non_zero(m)).unwrap();
+        let mut data = vec![0; len];
+        let mut seed: u32 = 0xdeadbeef;
+        for i in 0..len {
+            data[i] = (seed >> 16) as u8;
+            seed = seed.wrapping_mul(0x15151).wrapping_add(0x31111111);
+        }
+        let encoded = coder.encode(&data).unwrap();
+
+        // Exhaustively checks all patterns.
+        for alive in 0usize..1 << (k + m) {
+            // If not exactly k fragments are alive, skip.
+            if alive.count_ones() as usize != k {
+                continue;
+            }
+            let mut fragments = vec![];
+            for i in 0..k + m {
+                if (alive & 1 << i) != 0 {
+                    fragments.push(encoded[i].clone());
+                }
+            }
+            assert_eq!(fragments.len(), k);
+            for index in 0..k + m {
+                if (alive & 1 << index) == 0 {
+                    // if index is not alive, reconstruct it and check the validity.
+                    let reconstructed = coder.reconstruct(index, fragments.iter())?;
+                    assert_eq!(reconstructed, encoded[index]);
+                }
+            }
+        }
+        Ok(())
+    }
     #[test]
     fn reconstruct_fails() {
         let mut coder = ErasureCoder::new(non_zero(4), non_zero(4)).unwrap();
