@@ -56,9 +56,9 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 ./autogen.sh
 if [[ $DEBUG = true ]]; then
-    LIBS="-lJerasure -lerasurecode_rs_vand" ./configure --disable-shared --with-pic --prefix $BUILD_DIR CFLAGS="${CFLAGS:-} -O0 -g"
+    LIBS="-lJerasure -lgf_complete" ./configure --disable-shared --with-pic --prefix $BUILD_DIR CFLAGS="${CFLAGS:-} -O0 -g"
 else
-    LIBS="-lJerasure -lerasurecode_rs_vand" ./configure --disable-shared --with-pic --prefix $BUILD_DIR
+    LIBS="-lJerasure -lgf_complete" ./configure --disable-shared --with-pic --prefix $BUILD_DIR
 fi
 patch -p1 < ../liberasurecode.patch # Applies a patch for building static library
 patch -p1 < ../make_liberasurecode_rs_vand_static.patch # Applies a patch for building static library
