@@ -15,6 +15,7 @@ fn main() {
         "install_deps.sh",
         "liberasurecode.patch",
         "for_darwin_to_detect_compiler_flag.patch",
+        "make_isa_l_static.patch",
     ] {
         fs::copy(file, build_dir.join(file)).unwrap();
     }

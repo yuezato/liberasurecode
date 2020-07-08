@@ -44,6 +44,20 @@ make $MAKE_FLAGS install
 cd ../
 
 #
+# isa-l
+#
+git clone https://github.com/intel/isa-l
+cd isa-l
+./autogen.sh
+if [[ $DEBUG = true ]]; then
+    ./configure --disable-shared --enable-static --with-pic --prefix $BUILD_DIR CFLAGS="${CFLAGS:-} -O0 -g"
+else
+    ./configure --disable-shared --enable-static --with-pic --prefix $BUILD_DIR
+fi
+make $MAKE_FLAGS install
+cd ../
+
+#
 # liberasurecode
 #
 git clone https://github.com/openstack/liberasurecode.git
@@ -56,9 +70,10 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 ./autogen.sh
 if [[ $DEBUG = true ]]; then
-    LIBS="-lJerasure" ./configure --disable-shared --with-pic --prefix $BUILD_DIR CFLAGS="${CFLAGS:-} -O0 -g"
+    LIBS="-lJerasure -lisal" ./configure --disable-shared --with-pic --prefix $BUILD_DIR CFLAGS="${CFLAGS:-} -O0 -g"
 else
-    LIBS="-lJerasure" ./configure --disable-shared --with-pic --prefix $BUILD_DIR
+    LIBS="-lJerasure -lisal" ./configure --disable-shared --with-pic --prefix $BUILD_DIR
 fi
 patch -p1 < ../liberasurecode.patch # Applies a patch for building static library
+patch -p1 < ../make_isa_l_static.patch # Applies a patch for building static library
 make $MAKE_FLAGS install

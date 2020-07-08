@@ -1,0 +1,85 @@
+diff --git a/src/backends/isa-l/isa_l_common.c b/src/backends/isa-l/isa_l_common.c
+index 63e7cca..74bf3b1 100644
+--- a/src/backends/isa-l/isa_l_common.c
++++ b/src/backends/isa-l/isa_l_common.c
+@@ -36,6 +36,13 @@
+ #include "erasurecode_helpers_ext.h"
+ #include "isa_l_common.h"
+ 
++void ec_encode_data(int, int, int, unsigned char*, unsigned char **, unsigned char **);
++void ec_init_tables(int, int, unsigned char*, unsigned char *);
++void gf_gen_rs_matrix(unsigned char*, int, int);
++void gf_gen_cauchy1_matrix(unsigned char*, int, int);
++int  gf_invert_matrix(unsigned char*, unsigned char*, const int);
++unsigned char gf_mul(unsigned char, unsigned char);
++
+ int isa_l_encode(void *desc, char **data, char **parity,
+         int blocksize)
+ {
+@@ -467,56 +474,19 @@ void * isa_l_common_init(struct ec_backend_args *args, void *backend_sohandle,
+         }
+      }
+ 
+-     /*
+-     * ISO C forbids casting a void* to a function pointer.
+-     * Since dlsym return returns a void*, we use this union to
+-     * "transform" the void* to a function pointer.
+-     */
+-    union {
+-        ec_encode_data_func encodep;
+-        ec_init_tables_func init_tablesp;
+-        gf_gen_encoding_matrix_func gen_matrixp;
+-        gf_invert_matrix_func invert_matrixp;
+-        gf_mul_func gf_mulp;
+-        void *vptr;
+-    } func_handle = {.vptr = NULL};
+-
+-    /* fill in function addresses */
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "ec_encode_data");
+-    desc->ec_encode_data = func_handle.encodep;
+-    if (NULL == desc->ec_encode_data) {
+-        goto error;
+-    }
+-
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "ec_init_tables");
+-    desc->ec_init_tables = func_handle.init_tablesp;
+-    if (NULL == desc->ec_init_tables) {
+-        goto error;
+-    }
+-
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, gen_matrix_func_name);
+-    desc->gf_gen_encoding_matrix = func_handle.gen_matrixp;
+-    if (NULL == desc->gf_gen_encoding_matrix) {
+-        goto error;
+-    }
++    desc->ec_encode_data = ec_encode_data;
++    desc->ec_init_tables = ec_init_tables;
+ 
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "gf_invert_matrix");
+-    desc->gf_invert_matrix = func_handle.invert_matrixp;
+-    if (NULL == desc->gf_invert_matrix) {
+-        goto error;
+-    }
+-
+-    func_handle.vptr = NULL;
+-    func_handle.vptr = dlsym(backend_sohandle, "gf_mul");
+-    desc->gf_mul = func_handle.gf_mulp;
+-    if (NULL == desc->gf_mul) {
+-        goto error;
++    if (strcmp(gen_matrix_func_name, "gf_gen_rs_matrix") == 0) {
++      desc->gf_gen_encoding_matrix = gf_gen_rs_matrix;
++    } else if (strcmp(gen_matrix_func_name, "gf_gen_cauchy1_matrix") == 0) {
++      desc->gf_gen_encoding_matrix = gf_gen_cauchy1_matrix;
++    }  else {
++      goto error;
+     }
+ 
++    desc->gf_invert_matrix = gf_invert_matrix;
++    desc->gf_mul = gf_mul;
+     desc->matrix = malloc(sizeof(char) * desc->k * (desc->k + desc->m));
+     if (NULL == desc->matrix) {
+         goto error;

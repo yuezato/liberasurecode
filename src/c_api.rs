@@ -11,6 +11,7 @@ pub enum EcBackendId {
     ISA_L_RS_VAND = 4,
     SHSS = 5,
     LIBERASURECODE_RS_VAND = 6,
+    ISA_L_RS_CAUCHY = 7,
 }
 
 #[repr(C)]
@@ -47,6 +48,7 @@ pub const EINSUFFFRAGS: u32 = 208;
 #[link(name = "gf_complete", kind = "static")]
 #[link(name = "Jerasure", kind = "static")]
 #[link(name = "Xorcode", kind = "static")]
+#[link(name = "isal", kind = "static")]
 extern "C" {
     /// Create a liberasurecode instance and return a descriptor
     /// for use with EC operations (encode, decode, reconstruct)

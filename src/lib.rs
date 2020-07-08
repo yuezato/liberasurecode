@@ -57,13 +57,21 @@ mod result;
 
 /// Erasure coding backends that can be used for encoding and decoding data.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(non_camel_case_types)]
 pub enum Backend {
     /// Read-Solomon erasure coding provided by `jerasure` library.
     JerasureRsVand,
 
     /// Cauchy base Read-Solomon erasure coding provided by `jerasure` library (default).
     JerasureRsCauchy,
+
+    /// Intel ISA-L Reed-Solomon on the Vandermonde Matrix
+    ISA_L_RSVand,
+
+    /// Intel ISA-L Reed-Solomon on the Cauchy Matrix
+    ISA_L_RSCauchy,
 }
+
 impl Default for Backend {
     /// `Backend::JerasureRsCauchy`を返す.
     fn default() -> Self {
@@ -143,6 +151,8 @@ impl Builder {
         let backend_id = match self.backend {
             Backend::JerasureRsCauchy => c_api::EcBackendId::JERASURE_RS_CAUCHY,
             Backend::JerasureRsVand => c_api::EcBackendId::JERASURE_RS_VAND,
+            Backend::ISA_L_RSVand => c_api::EcBackendId::ISA_L_RS_VAND,
+            Backend::ISA_L_RSCauchy => c_api::EcBackendId::ISA_L_RS_CAUCHY,
         };
         let checksum_type = match self.checksum {
             Checksum::None => c_api::EcChecksumType::NONE,
@@ -422,7 +432,10 @@ mod tests {
 
     #[test]
     fn various_params() {
-        for backend in [Backend::JerasureRsCauchy, Backend::JerasureRsVand].iter() {
+        for backend in [
+            Backend::JerasureRsCauchy, Backend::JerasureRsVand,
+            Backend::ISA_L_RSCauchy, Backend::ISA_L_RSVand,
+        ].iter() {
             for checksum in [Checksum::None, Checksum::Crc32, Checksum::Md5].iter() {
                 for data_fragments in (3..6).map(non_zero) {
                     for parity_fragments in (1..4).map(non_zero) {
