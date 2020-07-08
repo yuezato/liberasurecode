@@ -7,6 +7,9 @@ rust:
   - beta
   - nightly
 
+before_install:
+  - sudo apt-get -y install nasm
+  
 before_script:
   - rustup component add clippy-preview
 
